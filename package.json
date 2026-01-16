@@ -1,0 +1,21 @@
+{
+  "name": "Section_10_URL_Shortner_Project",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type":"module",
+  "scripts": {
+    "dev": "node --watch index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.27.0",
+  "devDependencies": {
+    "@types/express": "~4.17.25",
+    "@types/node": "^25.0.9"
+  },
+  "dependencies": {
+    "express": "~4.22.1"
+  }
+}
