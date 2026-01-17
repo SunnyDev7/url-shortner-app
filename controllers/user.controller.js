@@ -3,9 +3,18 @@ import { randomBytes, createHmac } from "node:crypto";
 
 import db from "../db/index.js";
 import { usersTable } from "../models/user.model.js";
+import { signUpPostRequestBodySchema } from "../validations/request.validations.js";
 
 export const signUp = async (req, res) => {
-  const { firstname, lastname, email, password } = req.body;
+  const validationResult = await signUpPostRequestBodySchema.safeParseAsync(
+    req.body,
+  );
+
+  if (validationResult.error) {
+    return res.status(400).json({ error: validationResult.error.format() });
+  }
+
+  const { firstname, lastname, email, password } = validationResult.data;
 
   const [existingUser] = await db
     .select({ id: usersTable.id })
