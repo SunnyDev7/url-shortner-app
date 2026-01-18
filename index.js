@@ -1,4 +1,5 @@
 import express from "express";
+import jwt from "jsonwebtoken";
 
 import userRoutes from "./routes/user.route.js";
 

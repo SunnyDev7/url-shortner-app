@@ -1,4 +1,9 @@
-import { signUpPostRequestBodySchema } from "../validations/request.validations.js";
+import jwt from "jsonwebtoken";
+
+import {
+  signUpPostRequestBodySchema,
+  logInPostRequestBodySchema,
+} from "../validations/request.validations.js";
 import { hashPasswordWithSalt } from "../utils/hash.js";
 import { getUserByEmail, createUser } from "../services/user.service.js";
 
@@ -29,4 +34,40 @@ export const signUp = async (req, res) => {
   );
 
   return res.status(201).json({ status: "success", data: { userId: user.id } });
+};
+
+export const logIn = async (req, res) => {
+  const validationResult = await logInPostRequestBodySchema.safeParseAsync(
+    req.body,
+  );
+
+  if (validationResult.error) {
+    return res.status(400).json({ error: validationResult.error.format() });
+  }
+
+  const { email, password } = validationResult.data;
+
+  const existingUser = await getUserByEmail(email);
+
+  if (!existingUser)
+    return res
+      .status(400)
+      .json({ error: `User with ${email} does not exists` });
+
+  const salt = existingUser.salt;
+  const existingHash = existingUser.password;
+
+  const { password: hashedPassword } = hashPasswordWithSalt(password, salt);
+
+  if (hashedPassword !== existingHash) {
+    return res.status(401).json({ error: `Password is incorrect` });
+  }
+
+  const payload = {
+    id: existingUser.id,
+  };
+
+  const token = jwt.sign(payload, process.env.JWT_SECRET);
+
+  return res.json({ status: "success", token });
 };
