@@ -1,11 +1,10 @@
-import jwt from "jsonwebtoken";
-
 import {
   signUpPostRequestBodySchema,
   logInPostRequestBodySchema,
 } from "../validations/request.validations.js";
 import { hashPasswordWithSalt } from "../utils/hash.js";
 import { getUserByEmail, createUser } from "../services/user.service.js";
+import { createUserToken } from "../utils/token.js";
 
 export const signUp = async (req, res) => {
   const validationResult = await signUpPostRequestBodySchema.safeParseAsync(
@@ -63,11 +62,7 @@ export const logIn = async (req, res) => {
     return res.status(401).json({ error: `Password is incorrect` });
   }
 
-  const payload = {
-    id: existingUser.id,
-  };
-
-  const token = jwt.sign(payload, process.env.JWT_SECRET);
+ const token = await createUserToken({ id: existingUser.id });
 
   return res.json({ status: "success", token });
 };
