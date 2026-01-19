@@ -62,7 +62,15 @@ export const logIn = async (req, res) => {
     return res.status(401).json({ error: `Password is incorrect` });
   }
 
- const token = await createUserToken({ id: existingUser.id });
+  const token = await createUserToken({ id: existingUser.id });
 
   return res.json({ status: "success", token });
+};
+
+export const getLoggedInUser = async (req, res) => {
+  const user = req.user;
+
+  if (!user) return res.status(400).json({ error: "User is not logged in" });
+
+  return res.json({ user });
 };
