@@ -1,7 +1,11 @@
 import { nanoid } from "nanoid";
 
+import { db } from "../db/index.js";
+import { urlsTable } from "../models/index.js";
+
 import { shortenPostRequestBodySchema } from "../validations/request.validations.js";
 import { createUrl } from "../services/url.service.js";
+import { eq } from "drizzle-orm";
 
 export const handleUrlRequests = async (req, res) => {
   const validationResult = await shortenPostRequestBodySchema.safeParseAsync(
@@ -25,4 +29,19 @@ export const handleUrlRequests = async (req, res) => {
     shortCode: result.shortCode,
     targetURL: result.targetURL,
   });
+};
+
+export const redirectToTargetUrl = async (req, res) => {
+  const code = req.params.shortCode;
+
+  const [result] = await db
+    .select({ targetURL: urlsTable.targetURL })
+    .from(urlsTable)
+    .where(eq(urlsTable.shortCode, code));
+
+  if (!result) {
+    return res.status(404).json({ error: "Invalid URL" });
+  }
+
+  return res.redirect(result.targetURL);
 };
