@@ -59,6 +59,31 @@ export const getUrlsofLoggedInUser = async (req, res) => {
   return res.json({ codes });
 };
 
+export const updateUrlofUser = async (req, res) => {
+  const validationResult = await shortenPostRequestBodySchema.safeParseAsync(
+    req.body,
+  );
+
+  if (validationResult.error) {
+    return res.status(400).json({ error: validationResult.error.format() });
+  }
+
+  const { url, code } = validationResult.data;
+
+  const id = req.params.id;
+
+  const [result] = await db
+    .update(urlsTable)
+    .set({ shortCode: code, targetURL: url })
+    .where(and(eq(urlsTable.id, id), eq(urlsTable.userId, req.user.id)))
+    .returning({
+      targetURL: urlsTable.targetURL,
+      shortCode: urlsTable.shortCode,
+    });
+
+  res.status(201).json({ status: "success", updated: { result } });
+};
+
 export const deleteUrlofUser = async (req, res) => {
   const id = req.params.id;
   const result = await db
