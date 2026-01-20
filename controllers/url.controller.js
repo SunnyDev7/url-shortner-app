@@ -5,7 +5,7 @@ import { urlsTable } from "../models/index.js";
 
 import { shortenPostRequestBodySchema } from "../validations/request.validations.js";
 import { createUrl } from "../services/url.service.js";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 export const handleUrlRequests = async (req, res) => {
   const validationResult = await shortenPostRequestBodySchema.safeParseAsync(
@@ -49,6 +49,7 @@ export const redirectToTargetUrl = async (req, res) => {
 export const getUrlsofLoggedInUser = async (req, res) => {
   const codes = await db
     .select({
+      id: urlsTable.id,
       targetURL: urlsTable.targetURL,
       shortCode: urlsTable.shortCode,
     })
@@ -56,4 +57,13 @@ export const getUrlsofLoggedInUser = async (req, res) => {
     .where(eq(urlsTable.userId, req.user.id));
 
   return res.json({ codes });
+};
+
+export const deleteUrlofUser = async (req, res) => {
+  const id = req.params.id;
+  const result = await db
+    .delete(urlsTable)
+    .where(and(eq(urlsTable.id, id), eq(urlsTable.userId, req.user.id)));
+
+  res.status(200).json({ deleted: true });
 };
