@@ -45,3 +45,15 @@ export const redirectToTargetUrl = async (req, res) => {
 
   return res.redirect(result.targetURL);
 };
+
+export const getUrlsofLoggedInUser = async (req, res) => {
+  const codes = await db
+    .select({
+      targetURL: urlsTable.targetURL,
+      shortCode: urlsTable.shortCode,
+    })
+    .from(urlsTable)
+    .where(eq(urlsTable.userId, req.user.id));
+
+  return res.json({ codes });
+};
