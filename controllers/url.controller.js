@@ -1,11 +1,13 @@
 import { nanoid } from "nanoid";
 
-import { db } from "../db/index.js";
-import { urlsTable } from "../models/index.js";
-
 import { shortenPostRequestBodySchema } from "../validations/request.validations.js";
-import { createUrl } from "../services/url.service.js";
-import { and, eq } from "drizzle-orm";
+import {
+  createUrl,
+  createRedirection,
+  getUrls,
+  updateUrl,
+  deleteUrl,
+} from "../services/url.service.js";
 
 export const handleUrlRequests = async (req, res) => {
   const validationResult = await shortenPostRequestBodySchema.safeParseAsync(
@@ -34,10 +36,7 @@ export const handleUrlRequests = async (req, res) => {
 export const redirectToTargetUrl = async (req, res) => {
   const code = req.params.shortCode;
 
-  const [result] = await db
-    .select({ targetURL: urlsTable.targetURL })
-    .from(urlsTable)
-    .where(eq(urlsTable.shortCode, code));
+  const result = await createRedirection(code);
 
   if (!result) {
     return res.status(404).json({ error: "Invalid URL" });
@@ -47,14 +46,9 @@ export const redirectToTargetUrl = async (req, res) => {
 };
 
 export const getUrlsofLoggedInUser = async (req, res) => {
-  const codes = await db
-    .select({
-      id: urlsTable.id,
-      targetURL: urlsTable.targetURL,
-      shortCode: urlsTable.shortCode,
-    })
-    .from(urlsTable)
-    .where(eq(urlsTable.userId, req.user.id));
+  const userId = req.user.id;
+
+  const codes = await getUrls(userId);
 
   return res.json({ codes });
 };
@@ -71,24 +65,18 @@ export const updateUrlofUser = async (req, res) => {
   const { url, code } = validationResult.data;
 
   const id = req.params.id;
+  const userId = req.user.id;
 
-  const [result] = await db
-    .update(urlsTable)
-    .set({ shortCode: code, targetURL: url })
-    .where(and(eq(urlsTable.id, id), eq(urlsTable.userId, req.user.id)))
-    .returning({
-      targetURL: urlsTable.targetURL,
-      shortCode: urlsTable.shortCode,
-    });
+  const result = await updateUrl(id, userId, code, url);
 
   res.status(201).json({ status: "success", updated: { result } });
 };
 
 export const deleteUrlofUser = async (req, res) => {
   const id = req.params.id;
-  const result = await db
-    .delete(urlsTable)
-    .where(and(eq(urlsTable.id, id), eq(urlsTable.userId, req.user.id)));
+  const userId = req.user.id;
+
+  const result = await deleteUrl(id, userId);
 
   res.status(200).json({ deleted: true });
 };
